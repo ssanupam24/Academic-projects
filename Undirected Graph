@@ -1,0 +1,84 @@
+import java.util.*; // For HashMap
+//This class has the definition of the node which is used in the fibonacci heap for mst.
+class Node2
+{
+	int id;
+	int neighbor;
+	Node2(int id)
+	{
+		this.id=id;
+		this.neighbor=0;
+	}
+	public void setId(int id)
+	{
+		this.id=id;
+	}
+	public int getId()
+	{
+		return id;
+	}
+	public void setNeighbor(int neighbor) 
+	{
+		this.neighbor=neighbor;
+	}
+}
+public class Node1<Node2> implements Iterable<Node2> {
+    // Contains the graph.  
+     Map<Node2, Map<Node2, Integer>> graph1 = new HashMap<Node2, Map<Node2, Integer>>();
+     
+    public boolean addNode(Node2 node) {
+        // If the node already exists, don't do anything.
+        if (graph1.containsKey(node))
+            return false;
+        // Otherwise, add the node with an empty set of outgoing edges. 
+        graph1.put(node, new HashMap<Node2, Integer>());
+        return true;
+    }
+
+    public void addEdge(Node2 one, Node2 two, int length) {
+        // Confirm both endpoints exist. 
+        if (!graph1.containsKey(one) || !graph1.containsKey(two))
+        	System.out.println("Not present");
+
+        // Add the edge in both directions. 
+        graph1.get(one).put(two, length);
+        graph1.get(two).put(one, length);
+    }
+    //Returns the weight of an edge
+    public int weight(Node2 one, Node2 two) { 
+        if (!graph1.containsKey(one) || !graph1.containsKey(two))
+        	System.out.println("Invalid edge");      
+        Integer result = graph1.get(one).get(two); 
+        if (result == null)
+        	System.out.println("Edge does not exist in the graph."); 
+        return result;
+    }
+    //Removes an edge from the graph
+    public void removeEdge(Node2 one, Node2 two) {
+         
+        if (!graph1.containsKey(one) || !graph1.containsKey(two))
+            System.out.println("Invalid edge");
+        graph1.get(one).remove(two);
+        graph1.get(two).remove(one);
+    }
+    //Returns edge list from the source node
+    public Map<Node2, Integer> edgesFrom(Node2 node) {
+        Map<Node2, Integer> edgeList = graph1.get(node);
+        if (edgeList == null)
+        	System.out.println("Source node does not exist.");
+        return Collections.unmodifiableMap(edgeList);
+    }
+    public boolean containsNode(Node2 node) {
+        return graph1.containsKey(node);
+    }
+    public int size() {
+        return graph1.size();
+    }
+    public boolean isEmpty() {
+        return graph1.isEmpty();
+    }
+    // Used to traverse the nodes in the graph.
+    public Iterator<Node2> iterator() {
+        return graph1.keySet().iterator();
+    }
+}
