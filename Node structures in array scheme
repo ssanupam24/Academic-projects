@@ -1,0 +1,39 @@
+//This class contains the node structure which is used in the simple array scheme mst
+public class Node
+{
+	int parent;
+	int edge;
+	int cost;
+	public Node(int parent, int edge, int cost)
+	{
+		this.parent = parent;
+		this.edge = edge;
+		this.cost = cost;
+	}
+	public Node()
+	{
+		this.parent = 0;
+		this.edge = 0;
+		this.cost = 0;
+	}
+	public int getParent()
+	{
+		return parent;
+	}
+	public int getEdge()
+	{
+		return edge;
+	}
+	public int getCost()
+	{
+		return cost;
+	}
+	public void setCost(int cost)
+	{
+		this.cost = cost;
+	}
+	public void setEdge(int edge)
+	{
+		this.edge = edge;
+	}
+}
