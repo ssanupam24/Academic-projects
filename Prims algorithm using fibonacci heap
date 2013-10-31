@@ -1,0 +1,185 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.*; 
+//This class calculates the mst in fibonacci heap
+public class Prim2 {
+	long start;
+	long stop;
+	long time;
+	//This method uses random graph for calculating mst
+    public void mstRandom(List<Integer> parent, List<Integer> edge, List<Integer> cost, int nodes, int edges) 
+    {
+    	Node1<Node2> graph = new Node1<Node2>(); 
+    	Node2 graph1[];
+    	int a[], b[];
+        try 
+        {
+      	graph1 = new Node2[nodes];
+      	a = new int[nodes-1];
+      	b = new int[nodes-1];
+      	//Put the key and the list of nodes in the map
+      	for(int i =0; i < nodes; i ++) 
+      	{
+      		graph1[i] = new Node2(i);
+      		graph.addNode(graph1[i]);
+      		//System.out.println(graph1[i].id);
+      	}
+      	//Store the edges, cost and parent in the map
+      	for(int i =0;i < edges; i++) 
+          {	
+              graph.addEdge(graph1[parent.get(i)],graph1[edge.get(i)],cost.get(i));
+      	}		
+        FibonacciHeap<Node2> pq = new FibonacciHeap<Node2>();
+        Map<Node2, FibonacciHeap.Entry<Node2>> entries = new HashMap<Node2, FibonacciHeap.Entry<Node2>>();
+        Node1<Node2> result = new Node1<Node2>();
+
+        // Pick an arbitrary starting node.
+        Node2 startNode = graph.iterator().next();
+        result.addNode(startNode);
+
+        // Adding all edges of this start node to the Fibonacci heap.
+        addEdges(startNode, graph, pq, result, entries);
+
+        //Algorithm starts here
+        int mincost = 0;
+        start = System.currentTimeMillis();
+        for (int i = 0; i < graph.size() - 1; ++i) {
+            // Pick the minimum node 
+            Node2 toAdd = (Node2) pq.removeMin().getValue();  
+            Node2 endpoint = minCostNode(toAdd, graph, result);
+            // Add this edge to the graph. 
+            result.addNode(toAdd);
+            result.addEdge(toAdd, endpoint, graph.weight(toAdd, endpoint));
+            //System.out.println(toAdd.id + "-" + endpoint.id);
+            a[i] = toAdd.id;
+            b[i] = endpoint.id;
+            mincost+=result.weight(toAdd, endpoint);
+            addEdges(toAdd, graph, pq, result, entries);
+        }
+        stop=System.currentTimeMillis();
+        time = stop - start;
+        //Print the cost here
+        System.out.println("Minimum cost= " + mincost);
+        for(int i =0; i < a.length;i++)
+        {
+        	System.out.println(a[i] + "-" + b[i]);
+        }
+        
+        System.out.println("Time of fibonacci Heap is  "+ time);
+    }
+        catch(Exception e)
+        {
+        	e.printStackTrace();
+        	System.exit(0);
+        }
+    }
+    //Adds the edges and performs the decrease key
+    private static void addEdges(Node2 node, Node1<Node2> graph,
+                                             FibonacciHeap<Node2> pq,
+                                             Node1<Node2> result,
+                                             Map<Node2, FibonacciHeap.Entry<Node2>> entries ) {
+        // Scanning over all edges connected to the node.
+        for (Map.Entry<Node2, Integer> arc : graph.edgesFrom(node).entrySet()) {
+            if (result.containsNode(arc.getKey())) 
+            	continue; 
+            if (!entries.containsKey(arc.getKey())) { 
+                entries.put(arc.getKey(), pq.makeHeap(arc.getKey(), arc.getValue()));
+            }
+            else if (entries.get(arc.getKey()).getPriority() > arc.getValue()) { 
+                pq.decreaseKey(entries.get(arc.getKey()), arc.getValue());
+            }
+        }
+    }
+ // Returns the minimum-cost edge from that node to some node that was visited
+    
+    private Node2 minCostNode(Node2 node, Node1<Node2> graph, 
+                                         Node1<Node2> result) {
+        Node2 endpoint = null;
+        int leastCost = Integer.MAX_VALUE;
+        for (Map.Entry<Node2, Integer> entry : graph.edgesFrom(node).entrySet()) {
+            
+            if (!result.containsNode(entry.getKey())) 
+            	continue;
+            if (entry.getValue() >= leastCost) 
+            	continue;
+            endpoint = entry.getKey();
+            leastCost = entry.getValue();
+        }
+        return endpoint;
+    }
+    //The input is taken from a file to calculate the mst
+    public void mstFile(String s1) {
+    	String line = null;
+    	Node1<Node2> graph = new Node1<Node2>(); 
+    	Node2 graph1[];
+    	int a[], b[];
+        try 
+        {
+      	//The adjacency list is created here
+      	BufferedReader br = new BufferedReader(new FileReader(s1));
+      	int nodes = 0;
+      	int edges = 0;
+      	line = br.readLine();
+          //read nodes and edges
+      	if (line != null){
+          String[] nodeNames = line.split(" ");  
+          nodes = Integer.parseInt(nodeNames[0]);
+          edges = Integer.parseInt(nodeNames[1]);
+      	}
+      	else {
+      		System.out.println("Please Enter valid nodes and edges");
+      		System.exit(0);
+      	}
+      	graph1 = new Node2[nodes];
+      	a = new int[nodes-1];
+      	b = new int[nodes-1];
+      	for(int i =0; i < nodes; i ++) 
+      	{
+      		graph1[i] = new Node2(i);
+      		graph.addNode(graph1[i]);
+      	}
+      	//Store the edges, cost and parent in the map
+      	while((line = br.readLine()) != null) 
+          {	
+              String[] tokens = line.split(" ");
+              int v1 = Integer.parseInt(tokens[0]);
+              int v2 = Integer.parseInt(tokens[1]);
+              int v3= Integer.parseInt(tokens[2]);  
+              graph.addEdge(graph1[v1],graph1[v2],v3);
+      	}		
+        FibonacciHeap<Node2> pq = new FibonacciHeap<Node2>();
+        Map<Node2, FibonacciHeap.Entry<Node2>> entries = new HashMap<Node2, FibonacciHeap.Entry<Node2>>();
+        Node1<Node2> result = new Node1<Node2>();
+        // Pick an arbitrary starting node.
+        Node2 startNode = graph.iterator().next();
+        result.addNode(startNode);
+        // Adding all edges of this start node to the Fibonacci heap.
+        addEdges(startNode, graph, pq, result, entries);
+        //Algorithm starts here
+        int mincost = 0;
+        for (int i = 0; i < graph.size() - 1; ++i) {
+            // Pick the minimum node 
+            Node2 toAdd = (Node2) pq.removeMin().getValue();  
+            Node2 endpoint = minCostNode(toAdd, graph, result); 
+            result.addNode(toAdd);
+            result.addEdge(toAdd, endpoint, graph.weight(toAdd, endpoint));
+            //System.out.println(toAdd.id + "-" + endpoint.id);
+            a[i] = toAdd.id;
+            b[i] = endpoint.id;
+            	mincost+=result.weight(toAdd, endpoint);
+            addEdges(toAdd, graph, pq, result, entries);
+        }
+        //Print the cost here
+        System.out.println("Minimum cost= " + mincost);
+        for(int i =0; i < a.length;i++)
+        {
+        	System.out.println(a[i] + "-" + b[i]);
+        }
+    }
+        catch(Exception e)
+        {
+        	e.printStackTrace();
+        	System.exit(0);
+        }
+    }
+}
