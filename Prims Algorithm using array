@@ -1,0 +1,286 @@
+import java.io.*; 
+import java.util.*;
+
+public class Prim3 
+{     
+		//The adjacency list is created here
+		Map<Integer, List<Node>> adjList= new HashMap<Integer,List<Node>>();
+    	int visited[]; 
+    	int dist[]; 
+    	int neigh[];  
+    	int i,j;
+    	int nodes = 0;
+    	int edges = 0;
+    	List<Integer> parent;
+    	List<Integer> edge;
+    	List<Integer> weight;
+    	boolean[] marked;
+    	int totEdges=0;
+    	long start =0;
+  	  	long stop=0;
+  	  	long time=0;
+  	  	//This method calculates the mst using input from the file. Here the simple array scheme is used.
+    	public void callPrimFile(String s1)
+    	{   
+    	  String line = null;
+    	  
+          try 
+          {	 
+        	BufferedReader br = new BufferedReader(new FileReader(s1));
+        	line = br.readLine();
+            //read nodes and edges
+        	if (line != null){
+            String[] nodeNames = line.split(" ");  
+            nodes = Integer.parseInt(nodeNames[0]);
+            edges = Integer.parseInt(nodeNames[1]);
+        	}
+        	else {
+        		System.out.println("Please Enter valid nodes and edges");
+        		System.exit(0);
+        	}
+        	visited = new int[nodes];
+        	neigh = new int[nodes];
+        	dist = new int[nodes];
+        	//Put the key and the list of nodes in the map
+        	for(int i =0; i < nodes; i ++) 
+        	{
+        		adjList.put(i, new ArrayList<Node>());
+        	}
+        	//Initialize the adjacency list
+        	for (i=0; i < nodes; i++) {
+                for(j=0; j < nodes; j++) { 
+                    adjList.get(i).add(new Node());
+                }
+        	}
+        	//Store the edges, cost and parent in the map
+        	while((line = br.readLine()) != null) 
+            {	
+                String[] tokens = line.split(" ");
+                int v1 = Integer.parseInt(tokens[0]);
+                int v2 = Integer.parseInt(tokens[1]);
+                int v3= Integer.parseInt(tokens[2]);  
+                //System.out.println(v1+" "+v2+" "+v3);
+                adjList.get(v1).get(v2).setCost(v3);
+                adjList.get(v2).get(v1).setCost(v3);
+        	}
+        for (i=0; i < nodes; i++) 
+            { 
+            neigh[i]=visited[i]=0; 
+            dist[i]=9999; 
+            } 
+        int current,c,mincost; 
+        current=0;dist[current]=0; 
+        c=1; 
+        visited[current]=1; 
+        //The algorithm starts here
+        while(c!=nodes) 
+        	{ 
+        	for (i=0;i < nodes;i++) 
+        	{  
+        	if(adjList.get(current).get(i).getCost()!=0) 
+        		if(visited[i]==0) 
+        			if(dist[i] > adjList.get(current).get(i).getCost()) 
+                            { 
+        				dist[i]=adjList.get(current).get(i).getCost(); 
+        				neigh[i]=current; 
+                            } 
+             } 
+        	mincost=9999; 
+        	for (i=0;i < nodes;i++) 
+        	{ 
+        	  if(visited[i]==0) 
+        		  if(dist[i] < mincost) 
+        		  { 
+        			  mincost=dist[i]; 
+        			  current=i; 
+        		  } 
+          } 
+          visited[current]=1; 
+          c++; 
+        	} 
+        mincost=0; 
+        for(i=0;i < nodes;i++) 
+    	   mincost=mincost+dist[i]; 
+        System.out.println("Minimum cost=" + mincost);  
+        for(i=1;i < nodes;i++) 
+    	   System.out.println(i+ "-" + neigh[i]);
+          }
+       catch(Exception e) {
+           e.printStackTrace();
+           System.exit(0);
+           }
+    	}
+    	//This method calculates the mst using random input. Here the simple array scheme is used.
+    	public void callPrimRandom(int n, double d)
+    	{   
+          try 
+          {
+        	this.nodes = n;
+        	visited = new int[nodes];
+        	neigh = new int[nodes];
+        	dist = new int[nodes];
+        	//The random graph is generated here.
+        	callRandomGraph(nodes,d);
+        	start = System.currentTimeMillis();
+	        for (i=0; i < nodes; i++) 
+	            { 
+	            neigh[i]=visited[i]=0; 
+	            dist[i]=9999; 
+	            } 
+	        int current,c,mincost; 
+	        current=0;dist[current]=0; 
+	        c=1; 
+	        visited[current]=1;
+	        while(c!=nodes) 
+        	{ 
+        	for (i=0;i < nodes;i++) 
+        	{  
+        	if(adjList.get(current).get(i).getCost()!=0) 
+        		if(visited[i]==0) 
+        			if(dist[i] > adjList.get(current).get(i).getCost()) 
+                            { 
+        				dist[i]=adjList.get(current).get(i).getCost(); 
+        				neigh[i]=current; 
+                            } 
+             } 
+        	mincost=9999; 
+        	for (i=0;i < nodes;i++) 
+        	{ 
+        	  if(visited[i]==0) 
+        		  if(dist[i] < mincost) 
+        		  { 
+        			  mincost=dist[i]; 
+        			  current=i; 
+        		  } 
+          } 
+          visited[current]=1; 
+          c++; 
+        	} 
+        mincost=0; 
+        for(i=0;i < nodes;i++) 
+    	   mincost=mincost+dist[i]; 
+        System.out.println("Minimum cost=" + mincost);  
+        for(i=1;i < nodes;i++) 
+    	   System.out.println(i+ "-" + neigh[i]);
+        stop=System.currentTimeMillis();
+        time = stop - start;
+        System.out.println("Time of simple array scheme is "+ time);
+        Prim2 p1 = new Prim2();
+        p1.mstRandom(parent,edge,weight,nodes,totEdges);
+          }
+       catch(Exception e) {
+           e.printStackTrace();
+           System.exit(0);
+           }
+    	}
+    	//This method creates a graph using random input.
+    	 public void callRandomGraph(int n, double d1)
+    	    {
+    		 	this.nodes = n;
+    	    	totEdges = (int)((d1) * (nodes*(nodes-1))/2);
+    	    	if (totEdges < (n-1))
+    	    	{
+    	    		System.out.println("Please Enter correct nodes and density");
+    	    		System.exit(0);
+    	    	}
+    	    	else
+    	    	{
+    	    	parent = new ArrayList<Integer>(totEdges);
+    	    	edge = new ArrayList<Integer>(totEdges);
+    	    	weight = new ArrayList<Integer>(totEdges);
+    	    	//System.out.println("size is"+totEdges);
+    	    	Random rand = new Random();
+    	    	int rParent = 0;
+    	    	int rEdge = 0;
+    	    	int randomCost = 0;
+    	    	for(int i =0; i < nodes; i ++) 
+            	{
+            		adjList.put(i, new ArrayList<Node>());
+            	}
+            	//Initialize the adjacency list
+            	for (i=0; i < nodes; i++) {
+                    for(j=0; j < nodes; j++) { 
+                        adjList.get(i).add(new Node());
+                    }
+            	}
+    	    	do
+    	    	{
+    	    	for(int x=0; x < totEdges; x++) 
+    	    	{
+    	    	rParent = rand.nextInt(nodes);
+    	    	rEdge = rand.nextInt(nodes);
+    	    	while(rParent == rEdge)
+    	    	{
+    	    		rParent = rand.nextInt(nodes);
+    	        	rEdge = rand.nextInt(nodes);
+    	    	}
+    	    	parent.add(rParent);
+    	    	edge.add(rEdge);
+    	    	randomCost = rand.nextInt(1000) + 1;
+    	    	weight.add(randomCost + 1);
+    	    	}
+    	    	//System.out.println();
+    	    	for(int x= 0; x < parent.size(); x++) 
+    	    	{ 
+    	    		for(int y =0; y < parent.size(); y++)
+    	    		{
+    	    			if (x != y)
+    	    			{
+    	    				if (((parent.get(x) == parent.get(y)) && (edge.get(x) == edge.get(y)))) 
+    	    				{
+    		    			parent.remove(parent.get(x));
+    		    			edge.remove(edge.get(x));
+    		    			rParent = rand.nextInt(nodes);
+    	    	        	rEdge = rand.nextInt(nodes);
+    		    			while(rParent == rEdge)
+    		    	    	{
+    		    	    		rParent = rand.nextInt(nodes);
+    		    	        	rEdge = rand.nextInt(nodes);
+    		    	    	}
+    		    	    	parent.add(rParent);
+    		    	    	edge.add(rEdge);
+    		    	    	randomCost = rand.nextInt(1000) + 1;
+    		    	    	weight.add(randomCost + 1);
+    		    			}
+    	    			}
+    	    		}
+    	    	}
+    	    	
+    	    	for (int x=0; x < totEdges; x++)
+    	    	{
+    	    		//System.out.println(parent.get(x) + " " + edge.get(x) + " "+ weight.get(x));
+    	    		adjList.get(parent.get(x)).get(edge.get(x)).setEdge(edge.get(x));
+    	    		adjList.get(edge.get(x)).get(parent.get(x)).setEdge(parent.get(x));
+    	    		adjList.get(parent.get(x)).get(edge.get(x)).setCost(weight.get(x));
+                    adjList.get(edge.get(x)).get(parent.get(x)).setCost(weight.get(x));
+    	    	}
+    	    	} while(!(callDfs(adjList)));
+    	    	}
+    	    }
+    	//This method uses DFS algorithm to check if the graph is a connected graph
+    	    public boolean callDfs(Map<Integer, List<Node>> adjList1)
+    	    {
+    	    	marked = new boolean[adjList1.size()];
+    	        dfs(adjList1,0,marked);
+    	        for (int i =0; i < adjList1.size();i++) 
+    	        {
+    	        if (marked[i] == false)
+    	        	return false;    	        
+    	        }
+    	        return true;
+    	    }
+    	    public void dfs(Map<Integer, List<Node>> adjList1, int s,boolean marked[]) 
+    	    {
+    	    	
+    	    	marked[s] = true;
+    	    	int j=0;
+    	    	for(int i =0;i < adjList1.get(s).size();i++)
+    	    	{   j = adjList1.get(s).get(i).getEdge();
+    	            if (!marked[j]) {
+    	                dfs(adjList1,j,marked);
+    	            	
+    	            }
+    	        }
+    	    }
+    }
+
