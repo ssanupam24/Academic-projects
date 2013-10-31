@@ -1,0 +1,494 @@
+import akka.actor._
+import scala.math._
+import scala.util.Random
+import scala.math
+import scala.util.control.Breaks._
+import scala.collection.mutable
+import akka.pattern.{ ask, pipe }
+
+object Pastry {
+
+  sealed trait PastryMessage
+  case class start extends PastryMessage
+  case class exit(id1: Int) extends PastryMessage
+  case class found(id: Int, hops : Int) extends PastryMessage
+  case class Join(id: Int,nodeList : List[Int],nodeArray : List[ActorRef], counter : ActorRef, numReq : Int,nPeers : Int) extends PastryMessage
+  case class StartReqProcessing extends PastryMessage
+  case class routingBegin extends PastryMessage
+  case class routingCompleted(total_hops: Int) extends PastryMessage
+  case class routing(id: Int ,matchedBits:Int, count : Int) extends PastryMessage
+  case class updatePeer(currPeers : Int) extends PastryMessage
+
+  class Peer(val r: Int, peers : Int) extends Actor 
+        {
+         var leafSet: Array[String] = new Array(4)
+         var neighSet: List[String] = Nil
+         var randId1 = 0
+         var randPeer = 0
+         var lsetLen = 0
+         var rsetLen = 2
+         var neighLen = 4
+         val bsize = ceil((math.log(peers)/math.log(2))).toInt
+         var row: Int = bsize
+         var col:Int = 2
+         var Rtable : Array[Array[String]] = Array.ofDim(row, col)
+         var mbits : Int = 0
+         var count = 0
+         var nodeId = 0
+         var nodeList : List[Int] = Nil
+         var nodeArray : List[ActorRef] = Nil
+         var numRequest : Int = 0
+         var nPeers :Int = 0
+         var originalPeers : Int =0
+
+         
+         var counter : ActorRef = _
+          //Bit flipping is done here which is used in the routing table.
+          def replaceChar(str : String,  index : Int) : String =
+          {     
+            if(str==null)
+            {
+                return str
+
+            }
+            else if(index<0 || index>=str.length)
+            {
+                return str
+            }
+            var chars = new Array[Char](str.length) 
+            chars = str.toCharArray()
+            if(chars(index) == '0')
+              chars(index) = '1'
+            else
+              chars(index) = '0'
+            return String.valueOf(chars)  
+          }
+          //converting decimal to binary string of length logn base 2
+          def changeToString(dec_id : Int) : String =     
+          {
+               var j =0
+               var diff = 0
+               var binary_id : String = ""
+               binary_id = Integer.toBinaryString(dec_id)
+             
+               if(binary_id.length < bsize)
+               {
+                  diff = bsize - binary_id.length
+                  for( j <-0 until diff)
+                  {
+                    binary_id = '0' + binary_id
+                  }
+               }
+               
+               binary_id
+          }
+          //The routing table is generated here
+         def genRoutingTable(nodeList : List[Int], nodeArray : List[ActorRef],id: Int): Int =
+         {
+            var i = 0
+            var j = 0
+            var temp_id = 0
+            var binary_peer1 : String = ""
+            var binary_self : String = ""
+            var binary_peer2 : String = ""
+            binary_self =  changeToString(id)
+  
+            for ( i <- 1 until bsize)
+            {
+              
+              binary_peer1 = replaceChar(binary_self, i)    //changing bits and creating routing Table
+              binary_peer2 = replaceChar(binary_self, i+1)
+              Rtable(i)(0) = binary_peer1
+              Rtable(i)(1) = binary_peer2
+             
+            }           
+			return 1
+          }
+          //The prefix match is done here.
+         def prefixMatch(binary_peers : String, binary_self: String) :Int =
+         {   
+
+             var bits : Int = 0
+             var k = 0
+           
+            if (binary_peers != Nil || binary_self != Nil)              
+            { 
+              while(k < bsize && (binary_peers.charAt(k) == binary_self.charAt(k)))
+              {
+                
+                  bits +=1
+                  k +=1
+              }
+            }
+           
+             bits
+
+         }
+
+         //In this method the key is checked if it is present in the leaf-set
+         def checkInLeaf(id : Int, count : Int,matchedbits : Int) : Boolean =
+         {
+          for(arg<-leafSet)
+          {           
+            if(arg == changeToString(id))
+            {
+              nodeArray(id)!routing(id,matchedbits,count+1)
+              return true
+            }
+          }
+          false
+         }
+         def receive = 
+            {
+              //The node is killed here
+              case exit(id1) =>
+              nPeers -=1
+              self ! PoisonPill
+                
+              case Join( id, nodeList1,nodeArray1,counter1,reqNr,nPeers1) =>
+              nodeList = nodeList1
+              nodeArray = nodeArray1
+              counter = counter1
+              nodeId = id
+              numRequest = reqNr
+              nPeers = nPeers1
+              var randPeerPrev : Int = 0
+              var range = nPeers
+                  
+                  //creating list for leafset. NodeIDs are compared to the current node and inserted appropriately
+                var j: Int = 0
+              
+              randPeer = Random.nextInt(range)
+              j = 0
+              while(j < 2) 
+              {      
+                        
+                randId1 = id-j-1 
+                if(nodeId == 0)
+                {
+                  leafSet(j) = changeToString(nPeers -j -1)
+                }
+                else if((nodeId == 1) && (j ==1))
+                {
+                  leafSet(j) = changeToString(nPeers-1)
+                }
+                else 
+                {          
+                  leafSet(j) = changeToString(randId1)
+                }
+                j +=1
+                 
+              }
+              j = 0
+              while(j < 2) 
+			  {
+				randId1 = id+j+1
+				if(nodeId == nPeers-1)
+				{
+					leafSet(j+2) = changeToString(j)
+				}
+				else if((nodeId == 1) && (j == 1))
+				{	
+					leafSet(j+2) = changeToString(j)
+				}
+				if(randId1 < nPeers)
+				{
+					leafSet(j+2) = changeToString(randId1)
+				}
+				j+=1
+             
+			 }
+                        
+                  
+			  j = 0
+			  while(j < 2)
+			  {
+				randId1 = id-j-3;          //creating neighbourhood set assuming proximity metric to be 3
+				if(randId1 >=0)
+				{ 
+				  neighSet ::= changeToString(randId1)
+				}
+				 j+=1
+			  }
+
+			  j = 0
+
+				 while(j < 2)
+			  {
+				randId1 = id+j+3;
+				if(randId1 < nPeers)
+				{
+				 neighSet ::= changeToString(randId1)
+	              
+				}
+				j+=1
+			  }
+
+
+
+			  for(i <- 0 until 2)  // generating row 0 of routing table
+
+			  {                  
+				  while((randPeer == id) && randPeer!= randPeerPrev)
+				  {
+					randPeer = Random.nextInt(range)
+				  }
+				  randPeerPrev = randPeer
+				  Rtable(0)(i) = changeToString(randPeer);
+				  randPeer = Random.nextInt(range)
+	              
+			  }
+	            
+			  genRoutingTable(nodeList,nodeArray,id)     //generating the Main routing Table
+                    
+				
+                //printing the routing table if needed.  
+               //   println("---------routing table-----------for " + changeToString(id) )
+               //   for(i<-0 until row)
+                ///  println("Row " + i + " " + Rtable(i)(0) + " " + Rtable(i)(1)+" owner " +  changeToString(id)  )
+               //   Thread.sleep(2000)
+
+              sender ! routingBegin
+              
+                  
+              case StartReqProcessing =>
+              var count : Int = 1
+              var closerandomPeer : Int = 0
+              var range = nPeers
+              var id = nodeId   // taking id of current node
+              
+              for(i<-0 until numRequest)    //getting the id of the first peer to which message will be routed
+              {
+                  do{
+                    do{
+                        closerandomPeer = Random.nextInt(range)
+                      }while(closerandomPeer == id)
+                    }while(prefixMatch(changeToString(id),changeToString(closerandomPeer)) != 1)
+
+              
+                  nodeArray(closerandomPeer) ! routing(id, 1, count)
+
+              }
+
+              case routing(id,matchedBits,hop_count) =>
+
+              var matchbits1: Int = 0
+              var matchbits2: Int = 0
+              var decimal_id : Int = -1
+              var range = nPeers
+              var foundInLeaf : Boolean = false
+              var flag : Boolean = false
+              var tempmatchbits : Int = matchedBits
+              //println("nodeList size" + nodeList.size)
+              if (nodeId == id)
+              {
+
+             //   println("Routing Completed for actor number " +id)
+                counter ! found(id,hop_count)
+              }
+              else 
+              {
+
+
+                foundInLeaf = checkInLeaf(id,matchedBits,hop_count)
+                if(!foundInLeaf)
+                {
+
+                  for(i <- 1 until bsize)
+                  {
+                    matchbits1 = prefixMatch(changeToString(id),Rtable(i)(0))
+                    matchbits2 = prefixMatch(changeToString(id),Rtable(i)(1))
+
+                    if(matchbits1 > tempmatchbits)
+                    {
+                      tempmatchbits = matchbits1
+                      decimal_id = Integer.parseInt(Rtable(i)(0),2)
+                    }
+                     if (matchbits2 > tempmatchbits)
+                    {
+                      tempmatchbits = matchbits2
+                      decimal_id = Integer.parseInt(Rtable(i)(1),2)
+                    }
+                   // temp_count = temp_count + 1
+                  }
+
+                    if(nodeArray(decimal_id).isTerminated)
+                    {
+
+                    
+                      while(nodeArray(decimal_id).isTerminated)
+                     {   
+                        if(decimal_id == (nPeers - 1) || (flag == true))
+                        {
+                            decimal_id -=1
+                            flag = true
+                        }
+                         decimal_id = decimal_id + 1
+                         
+                     }
+                     nodeArray(decimal_id) ! routing(id,tempmatchbits, hop_count+1)
+                    }
+                    else
+                    {
+                    
+                    if(decimal_id >=0 && decimal_id < nPeers)
+                    {
+                      if(nodeArray(decimal_id) == Nil)
+                      println("Nulll actor")
+                      else
+                      nodeArray(decimal_id)! routing(id,tempmatchbits,hop_count+1) 
+                  
+                    }
+                  }
+                }
+            }
+         }
+
+
+              }
+                
+            
+class counting(nReq : Int , peers : Int, nKill : Int) extends Actor 
+        {
+            val routedSet = mutable.Set.empty[Int]
+            var routedCount = 0
+            var total_hops = 0
+            var start : Long = _
+            var avg_hop : Double = _
+	          var nPeers : Int = peers
+            def receive = 
+            { 
+             
+              case found(id,hops) =>       
+              total_hops = total_hops + hops
+              if (!routedSet.contains(id))
+              {
+                routedCount +=1
+                routedSet +=id
+              }
+
+              //println("routed count " + routedCount + " actor no " + id + " " + nPeers)   
+              if(routedCount == (nPeers-nKill))
+              {
+                self!routingCompleted(total_hops)
+              }
+
+              case routingCompleted(total_hops) =>
+              avg_hop = total_hops.toDouble/(routedCount.toDouble*nReq.toDouble)
+              println("Average Number of hops for this configuration " + avg_hop)
+              System.exit(0)
+		 
+	             /*  case updatePeer(currPeers) =>
+              println("curr "+ currPeers)
+	           if(currPeers < nPeers)
+	           	nPeers = currPeers*/
+	       
+             }
+                    
+       }
+
+  class Master(nNodes: Int,nReq: Int, nodeList: List[Int] ,nodeArray: List[ActorRef],nKill: Int) extends Actor  
+        {      
+        
+          var nodeList1: List[Int] = Nil
+          var randomIdList : List[Int] = Nil
+          var NrOfActorsInit : Int = 0
+          var nKillNode: Int = nKill
+          var counter = context.actorOf(Props(new counting(nReq,nNodes,nKill)))
+         
+          def receive = 
+          {
+              case `start` =>
+              var randId = 0
+              var genRandId = 0
+              var range = nNodes
+              var nodes = nNodes
+              val system = ActorSystem("pastrySystem")
+              for (i<-0 until nNodes)
+              {
+                randomIdList ::= i
+              }
+
+              for(i<-0 until nNodes)
+              {
+                nodeArray(nodeList(i)) ! Join(nodeList(i),nodeList,nodeArray,counter,nReq,nNodes)
+              }
+              var j =0
+              //The node is killed according to the input given by the user.
+              while(j < nKillNode)
+              {
+                randId = Random.nextInt(nodes-1)
+                println("killed node " + randId)
+                nodeArray(nodeList(randId)) ! exit(nodeList(randId))
+                j +=1
+                Thread.sleep(1000)
+              }
+                                                       
+
+              case `routingBegin`=>
+              var nodes = nNodes
+              NrOfActorsInit +=1
+              if(NrOfActorsInit == nodes)   // all actor initialized ...routing can start now
+              {
+                for(i <-0 until nNodes)
+                {
+                  nodeArray(nodeList(i)) ! StartReqProcessing
+                }
+              }
+            }
+
+    
+        }
+        // Create an Akka system
+        def main(args: Array[String]) = 
+        {
+            if(args.length < 2)
+            {
+              println("Please provide correct inputs")
+            }
+            else 
+            {
+                var nodeList: List[Int] = Nil
+                var nodeArray: List[ActorRef] = Nil
+                val randomSet = mutable.Set.empty[Int]
+                var nNodes:Int = args(0).toInt
+                var nReq:Int = args(1).toInt
+                var killNode: Int = args(2).toInt
+                val system = ActorSystem("pastrySystem")
+                 
+                
+                var randId : Int = 0
+
+                var logx = ceil(Math.log(nNodes)/Math.log(2))
+                if(logx != Math.log(nNodes)/Math.log(2))
+                {
+                  var tempNodes = pow(2,logx)
+                  nNodes = tempNodes.toInt  // converting input to nearest multiple of 2 for our implementation
+                }
+
+                val range : Int = nNodes
+                var nodes : Int = nNodes
+              
+
+                do 
+                {
+                  do
+                  {
+                    randId = Random.nextInt(range)
+                  }while(randomSet.contains(randId))   //creating unique random numbers
+
+                  randomSet += randId
+                  nodeArray ::= system.actorOf(Props(new Peer(randId,nNodes)))
+                  nodeList ::= randId
+                  nodes -=1
+                }while(nodes != 0)
+
+    
+
+                  val master = system.actorOf(Props(new Master(nNodes,nReq,nodeList,nodeArray,killNode)), "Master")
+                  master ! start
+             }
+          }
+
+      }
+        
