@@ -1,4 +1,4 @@
-//Pastry peer-peer network implementation by Vishal and Anupam
+//Pastry peer-peer network implementation by Anupam
 import akka.actor._
 import scala.math._
 import scala.util.Random
