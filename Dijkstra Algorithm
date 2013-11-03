@@ -1,0 +1,103 @@
+import java.util.*;
+public class Dijkstra 
+	{
+		public static void selectPaths(Node source)
+		{
+			source.weight = 0;
+			PriorityQueue<Node> pq = new PriorityQueue<Node>();
+			pq.add(source);
+			//System.out.println(pq.isEmpty());
+			while (!pq.isEmpty())
+			{
+				Node n1 = pq.poll();
+				//visiting each edge here
+				for(Edge e: n1.e) 
+				{
+					Node n2 = e.n1;
+					int w1 = e.weight1;
+					int d = n1.weight + w1;
+					//calculate the distance here and select the min distance and the corresponding node
+					if (d < n2.weight) 
+					{
+						pq.remove(n2);
+						n2.weight = d;
+						n2.prevId = n1;
+						pq.add(n2);
+					}
+				}
+			}
+		}
+		//here the path from a specific node is returned
+		public static List<Node> getPathTo(Node n1) 
+		{
+			List<Node> path = new ArrayList<Node>();
+			for(Node v = n1; v!=null;v=v.prevId)
+			{
+				path.add(v);
+			}
+			Collections.reverse(path);
+			return path;
+		}
+		public static void main(String args[]) 
+		{
+			Node n0 = new Node(0);
+			Node n1 = new Node(1);
+			Node n2 = new Node(2);
+			Node n3 = new Node(3);
+			Node n4 = new Node(4);
+			n0.e = new Edge[]{new Edge(n1,5), new Edge(n2, 10),
+                    new Edge(n3, 8) };
+            n1.e = new Edge[]{ new Edge(n0, 5),
+                    new Edge(n2, 3),
+                    new Edge(n4, 7) };
+            n2.e = new Edge[]{ new Edge(n0, 10),
+                    new Edge(n1, 3) };
+			n3.e = new Edge[]{ new Edge(n0, 8),
+			                      new Edge(n4, 2) };
+			n4.e = new Edge[]{ new Edge(n1, 7),
+			                    new Edge(n3, 2) };
+			Node[] vertices = { n0, n1, n2, n3, n4 };
+			selectPaths(n0);
+			for (Node v : vertices)
+			{
+			System.out.println("Distance to " + v.id + ": " + v.weight);
+			//List<Node> path = getPathTo(v);
+			//System.out.println("Path: " + path.iterator().next().id);
+}       
+			
+		}
+	}
+
+class Node implements Comparable<Node>
+{
+	int id;
+	int weight = Integer.MAX_VALUE;
+	Edge[] e;
+	Node prevId;
+	Node(int id)
+	{
+		this.id = id;
+	}
+	public void setWeight(int weight)
+	{
+		this.weight=weight;
+	}
+	public int getWeight()
+	{
+		return weight;
+	}
+	public int compareTo(Node n)
+	{
+		return Integer.compare(weight, n.weight);
+	}
+}
+ class Edge
+	{
+	  Node n1;
+	  int weight1;
+	  public Edge(Node n1, int weight1)
+	  {
+		  this.n1 = n1;
+		  this.weight1 = weight1;
+	  }
+	}
