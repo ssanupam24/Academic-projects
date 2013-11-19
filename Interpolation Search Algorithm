@@ -1,0 +1,59 @@
+//The algorithm is implemented in C++.
+//Anupam
+#include <iostream>
+using namespace std;
+int callInter(int a[], int s, int length);
+int main()
+{
+	int a[6]={4,5,8,9,10,11};
+	int c,s1,length1 = 0;
+	cout<<"Enter the element to search";
+	cin >> s1;
+	length1 = sizeof(a)/sizeof(int);
+	//cout<<length1;
+	c = callInter(a,s1,length1);
+	if (c == 1)
+	cout<<"Element is found";
+	else
+	cout<<"Element is not found";	
+}
+
+int callInter(int a[], int s, int length)
+{
+	int high = length - 1;
+	int low = 0;
+	int max = a[high];
+	int min = a[low];
+	//cout<<high<<low<<max<<min;
+	int guess,offset,size = 0;
+	while (true) {
+	if (low > high || s < min || s > max)
+	return -1;
+	if (high == low)
+	{
+		guess = high;
+	}
+	else
+	{
+		size = high - low;
+		//cout<<"size is "<<size;
+		offset = (int) ((float)((size - 1) * (s - min)) / (float)(max - min));					
+		//cout<<"offset is "<<offset;
+		guess = low + offset;
+		//cout<<"guess is "<<guess;
+	}
+	if (a[guess] == s)
+		return 1;
+	//if (guess == 0 || guess == length - 1)
+	//return -1;
+	if (a[guess] > s) {
+		high = guess - 1;
+		max = a[high];
+	}
+	if (a[guess] < s) {
+		low = guess + 1;
+		min = a[low];
+	}
+	}
+	return 0;
+}
