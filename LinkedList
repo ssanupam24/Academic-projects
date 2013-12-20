@@ -1,0 +1,140 @@
+
+//In file1.h file add the below code.
+typedef struct node {
+	int data;
+	node* next;
+};
+class link{
+
+	node* list;
+	public:
+		node* head;
+		link()
+		{
+		  list = NULL;
+		  head = NULL;
+		}
+	void insert();
+	void deletelist();
+	void display_list();
+};
+/////////////////////////////////////
+//In linked1.cpp
+#include <iostream>
+#include "file1.h"
+using namespace std;
+
+void link :: display_list()
+{
+ list=head;
+ cout<<endl;
+ if (list==NULL)
+ {
+  cout<<"Link list is empty";
+  return;
+ }
+ while(list != NULL)
+ {
+   cout<<list->data<<"\t";
+   list=list->next;
+ }
+}
+void link :: insert(){
+			int ch;
+			list = head;
+			cout<<"Enter a choice";
+			cout<<"1.Enter at first"<<endl;
+			cout<<"2.Enter in middle"<<endl;
+			cout<<"3.Enter at last"<<endl;
+			cin>>ch;
+			node* newnode;
+			newnode = new node;
+			switch(ch){
+				case 1:
+						cout<<"Enter a number";
+						cin>>newnode->data;
+						list = head;
+						if(list == NULL){
+							list = newnode;
+							newnode->next = NULL;
+							head = list;
+							}
+						else{
+							newnode->next = list;
+							head = newnode;
+							}
+						break;
+				case 2:
+						int no;
+						cout<<"Enter number after which you want to insert";
+						cin>>no;
+						list = head;
+						while(list->next!=NULL){
+							if (list->data = no) {
+								cout<<"Enter the number";
+								cin>>newnode->data;
+								newnode->next = list->next;
+								list->next = newnode;
+								if(list == head){
+									head = newnode;
+									}
+								return;
+							}
+							list = list->next;
+						}
+							break;
+				case 3:
+						list = head;
+						while(list->next != NULL){
+							list = list->next;
+							}
+							cout<<"Enter a number";
+							cin>>newnode->data;
+							if(head == NULL){
+								list = newnode;
+								head = list;
+							}
+							else {
+								list->next = newnode;
+								newnode->next=NULL;	
+							}
+							break;
+							
+				}
+	}
+	void link :: deletelist(){
+		
+		cout<<endl;
+		list=head;
+		int no;
+		cout<<"Enter a number to be deleted";
+		cin>>no;
+		if (head->data = no){
+			head = head->next;
+			return;
+			}
+		while(list->next !=NULL){
+			if (list->next->data == no){
+			list->next = list->next->next;
+			return;
+			}
+			list = list->next;
+			}
+		}
+		
+////////////////////////////////////////////////
+//In main.cpp
+#include <iostream>
+#include "file1.h"
+using namespace std;
+
+int main()
+{
+	class link l;
+	while(1) {
+	l.insert();
+	l.display_list();
+	}
+	return 0;
+}
+
