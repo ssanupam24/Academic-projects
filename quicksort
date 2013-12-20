@@ -1,0 +1,42 @@
+#include <iostream>
+using namespace std;
+
+void quicksort(int*,int,int);
+int partition(int*,int,int);
+int main(int argc, char **argv)
+{
+	int a[] = {1,2,8,7,9,11,14,4};
+	int i=0;
+	quicksort(a,0,7);
+	while(i<8)
+	{
+		cout<<a[i]<<endl;
+		i = i+1;
+		}
+	return 0;
+}
+void quicksort(int* a,int p, int r){
+		int q=0;
+		if(p<r){
+			q=partition(a,p,r);
+			quicksort(a,p,q-1);
+			quicksort(a,q+1,r);
+			}
+	}
+int partition(int* a,int p,int r){
+		int i =p-1;
+		int x = a[r];
+		int t=0;
+		for(int j = p;j<=(r-1);j++){
+			if(a[j] <= x){
+				i = i + 1;
+				t = a[i];
+				a[i]=a[j];
+				a[j]=t;
+				}
+			}
+		t=a[i+1];
+		a[i+1]=a[r];
+		a[r]=t;
+		return (i+1);
+	}
