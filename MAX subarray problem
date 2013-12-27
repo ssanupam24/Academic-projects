@@ -1,0 +1,67 @@
+#include <iostream>
+
+using namespace std;
+struct maxarray{
+	int max_left;
+	int max_right;
+	int sum;
+	};
+maxarray* findmaxsub(int*,int,int);
+maxarray* findcrosssum(int*,int,int,int);
+int main(){
+	maxarray* l1 = new maxarray();
+	int a[] = {13,-3,-25,20,-3,16};
+	l1 = findmaxsub(a,0,5);
+	cout<<l1->sum<<" "<<l1->max_left<<" "<<l1->max_right<<endl;
+	delete(l1);
+	return 0;
+	}
+maxarray* findcrosssum(int* a,int low,int mid,int high){
+	maxarray* l6 = new maxarray();
+	int left_sum=-100;
+	int right_sum=-100;
+	int sum=0;
+	for(int i =mid;i>=low;i--){
+		sum = sum + a[i];
+		if(sum > left_sum){
+			left_sum = sum;
+			l6->max_left = i;
+			}
+		}
+	sum = 0;
+	for(int j = (mid+1);j<=high;j++){
+		sum = sum + a[j];
+		if(sum > right_sum){
+			right_sum = sum;
+			l6->max_right = j;
+			}
+		}
+	l6->sum = left_sum + right_sum;
+	return l6;
+	}
+
+maxarray* findmaxsub(int* a,int low,int high){
+	maxarray* l2 = new maxarray();
+	maxarray* l3 = new maxarray();
+	maxarray* l4 = new maxarray();
+	maxarray* l5 = new maxarray();
+	int mid=0;
+	if(high == low) {
+		l5->max_left = low;
+		l5->max_right = high;
+		l5->sum = a[low];
+		return l5;
+	}
+	else {
+			mid=(low + high) / 2;
+			l2=findmaxsub(a,low,mid);
+			l3=findmaxsub(a,mid+1,high);
+			l4=findcrosssum(a,low,mid,high);
+			if((l2->sum >= l3->sum) && (l2->sum >= l4->sum))
+				return l2;
+			else if((l3->sum >= l2->sum) && (l3->sum >= l4->sum))
+				return l3;
+			else
+				return l4;
+		}
+	}
