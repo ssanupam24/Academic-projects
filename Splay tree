@@ -1,0 +1,67 @@
+#include <iostream>
+using namespace std;
+
+struct node{
+	int value;
+	node* left;
+	node* right;
+	};
+node* newnode(int val){
+	node* newnode1 = new node();
+	newnode1->value = val;
+	newnode1->left = NULL;
+	newnode1->right = NULL;
+	}
+node* rightRotate(node* root){
+	node* dest = root->left;
+	root->left = dest->right;
+	dest->right = root;
+	return dest;
+	}
+node* leftRotate(node* root){
+	node* dest = root->right;
+	root->right = dest->left;
+	dest->left = root;
+	return dest;
+	}
+node* findSplay(node* root, int val){
+	if(root == NULL) return NULL;
+	if(root->value == val) return root;
+	if(root->value > val) {
+		if(root->left == NULL) return root;
+		if(root->left->value > val){
+		root->left->left = findSplay(root->left->left, val);
+		root = rightRotate(root);
+		}
+		else if(root->left->value < val){
+			root->left->right = findSplay(root->left->right, val);
+			if(root->left->right != NULL)
+			root->left = leftRotate(root->left);
+			}
+		return (root->left == NULL) ? root : rightRotate(root);
+	}
+	else {
+		if(root->right == NULL) return root;
+		if(root->right->value > val){
+		root->right->left = findSplay(root->right->left, val);
+		if(root->right->left != NULL)
+		root->right = rightRotate(root->right);
+		}
+		else if(root->right->value < val){
+			root->right->right = findSplay(root->right->right, val);
+			root = leftRotate(root);
+			}
+		return (root->right == NULL) ? root : leftRotate(root);
+	}
+	}
+int main()
+{
+	node *root = newnode(100);
+    root->left = newnode(50);
+    root->right = newnode(200);
+    root->left->left = newnode(40);
+    root->left->left->left = newnode(30);
+    root->left->left->left->left = newnode(20);
+    root = findSplay(root, 20);
+	cout<<root->value<<endl;
+	}
