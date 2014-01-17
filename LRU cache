@@ -1,0 +1,119 @@
+#include <iostream>
+#include <list>
+#include <cstring>
+#include <cstdlib>
+#include <vector>
+using namespace std;
+
+struct qnode{
+	qnode* prev;
+	qnode* next;
+	int pageno;
+	};
+struct queue{
+	qnode* head;
+	qnode* rear;
+	int count;
+	int noofframes;
+	};
+struct hash1{
+	int capacity;
+	qnode* *array;
+	};
+qnode* newQNode(int pageno){
+	qnode* temp = new qnode();
+	temp->pageno = pageno;
+	temp->next = temp->prev = NULL;
+	}
+	
+queue* createQueue(int noofframes){
+	queue* newqueue = new queue();
+	newqueue->count = 0;
+	newqueue->head = newqueue->rear = NULL;
+	newqueue->noofframes = noofframes;
+	return newqueue;
+	}
+hash1* createhash(int capacity){
+	hash1* newhash = new hash1();
+	newhash->capacity = capacity;
+	newhash->array = (qnode**) new qnode[capacity];
+	int i;
+	for(i=0; i < capacity; i++)
+		newhash->array[i] = NULL;
+	return newhash;
+	}
+int slotavbl(queue* newqueue){
+	return newqueue->count == newqueue->noofframes;
+	}
+int queueEmpty(queue* newqueue){
+	return newqueue->rear == NULL;
+	}
+void dequeue(queue* newqueue){
+	if(queueEmpty(newqueue))
+		return;
+	if(newqueue->head == newqueue->rear)
+		newqueue->head = NULL;
+	qnode* temp = newqueue->rear;
+	newqueue->rear = newqueue->rear->prev;
+	if(newqueue->rear){
+		newqueue->rear->next = NULL;
+		}
+	delete(temp);
+	newqueue->count--;
+	}
+void enqueue(queue* newqueue, hash1* newhash, int pageno){
+	//removes least recently used node from the rear end
+	if(slotavbl(newqueue)){
+		newhash->array[newqueue->rear->pageno] = NULL;
+		dequeue(newqueue); 
+	}
+	qnode* temp = newQNode(pageno);
+	temp->next = newqueue->head;
+	if(queueEmpty(newqueue))
+		newqueue->head = newqueue->rear = temp;
+	else
+	{
+		newqueue->head->prev = temp;
+		newqueue->head = temp;
+		}
+	newhash->array[pageno] = temp;
+	newqueue->count++;
+	}
+void reference(queue* newqueue, hash1* newhash, int pageno){
+		qnode* reqpage = newhash->array[pageno];
+		if(reqpage == NULL)
+			enqueue(newqueue,newhash,pageno);
+		else if(reqpage != newqueue->head){
+			reqpage->prev->next = reqpage->next;
+			if(reqpage->next)
+				reqpage->next->prev = reqpage->prev;
+			if(reqpage == newqueue->rear)
+			{
+				newqueue->rear = reqpage->prev;
+				newqueue->rear->next = NULL;
+				}
+			reqpage->next = newqueue->head;
+			reqpage->prev = NULL;
+			reqpage->next->prev = reqpage;
+			newqueue->head = reqpage;
+			}
+	}
+
+int main(int argc, char* argv[]){
+	queue* q = createQueue(4);
+    hash1* newhash = createhash( 10 );
+    reference( q, newhash, 1);
+    reference( q, newhash, 2);
+    reference( q, newhash, 3);
+    reference( q, newhash, 1);
+    reference( q, newhash, 4);
+    reference( q, newhash, 5);
+	cout<<q->head->pageno<<endl;
+	cout<<q->head->next->pageno<<endl;
+	cout<<q->head->next->next->pageno<<endl;
+	cout<<q->head->next->next->next->pageno<<endl;
+	return 0;
+	}
+
+
+
